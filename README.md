@@ -1,4 +1,8 @@
-# SOC Case Manager
+<p align="center">
+  <img src="docs/images/soc-banner.png" alt="SOC Incident Response Manager security operations banner" width="100%">
+</p>
+
+# SOC Incident Response Manager
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Tests](https://github.com/asaf0505-svg/SOC-Incident-Response-Manager/actions/workflows/tests.yml/badge.svg)](https://github.com/asaf0505-svg/SOC-Incident-Response-Manager/actions/workflows/tests.yml)
@@ -7,6 +11,12 @@
 A local Python application for managing, prioritizing, and reporting on Security Operations Center (SOC) incidents. The project models a practical incident-response workflow: it loads security cases from JSONL records, validates them, prioritizes urgent incidents, tracks investigation activity, and reports open remediation work by team.
 
 This repository was developed as a four-person academic team project focused on advanced Python and object-oriented design.
+
+## Why this project matters
+
+This project demonstrates how core Python engineering concepts can support a realistic SOC workflow. It turns raw incident records into validated domain objects, prioritizes urgent cases, protects investigation state from failed operations, and gives team leads a clear view of outstanding remediation work.
+
+For a cybersecurity role, it highlights practical thinking around **incident triage**, **defensive validation**, **risk-based prioritization**, **audit-friendly actions**, and **operational reporting**.
 
 ## Highlights
 
@@ -58,7 +68,8 @@ SOC-Incident-Response-Manager/
 │   ├── sample_data.jsonl          # Synthetic incident records
 │   └── remediation_tasks.jsonl    # Synthetic remediation tasks
 ├── docs/
-│   └── assignment-notes-he.md     # Original Hebrew academic documentation
+│   ├── images/soc-banner.png       # Repository banner
+│   └── assignment-notes-he.md      # Original Hebrew academic documentation
 ├── soc_case_manager/
 │   ├── context_managers.py        # Investigation lifecycle and rollback
 │   ├── iterators.py               # Custom iterator and lazy generators
@@ -91,6 +102,25 @@ python main.py
 On Windows, use `py main.py` if `python` is not available as a command.
 
 The demonstration loads the sample data and prints the complete flow: validation, prioritization, iteration, risk calculation, safe investigation state changes, task completion, and workload reporting.
+
+### Sample run
+
+```text
+=== SOC Case Manager - תרחיש הדגמה ===
+נטענו 15 תיקים תקינים.
+
+--- תור עדיפויות (heapq) ---
+נשלף ראשון (הכי דחוף): INC-002
+
+--- Context Manager ---
+החריגה נתפסה. חזר לסטטוס קודם: Closed
+
+--- דוח מנהלים: עומס משימות מנע פתוחות לפי צוות ---
+צוות: Security   | משימות פתוחות: 2
+צוות: Network    | משימות פתוחות: 1
+```
+
+The excerpt above is produced from synthetic demonstration data; no production SOC information is included in this repository.
 
 ## Run the tests
 
