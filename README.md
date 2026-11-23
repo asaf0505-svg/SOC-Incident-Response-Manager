@@ -1,172 +1,140 @@
-# הצעת הפרויקט
+# SOC Case Manager
 
-**שם ותיאור:** SOC Case Manager — מערכת מקומית לניהול ותעדוף תיקי חקירה של אירועי אבטחת מידע.
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://github.com/asaf0505-svg/Soar-project/actions/workflows/tests.yml/badge.svg)](https://github.com/asaf0505-svg/Soar-project/actions/workflows/tests.yml)
+[![Built with the standard library](https://img.shields.io/badge/dependencies-standard%20library-2ea44f)](#technology)
 
-**הצורך העסקי:** צוותי אבטחה מטפלים באירועים רבים. ריכוז המידע והפעולות מסייע למנוע הזנחת תיקים ולהבחין בין טיפול שוטף לטיפול דחוף.
+A local Python application for managing, prioritizing, and reporting on Security Operations Center (SOC) incidents. The project models a practical incident-response workflow: it loads security cases from JSONL records, validates them, prioritizes urgent incidents, tracks investigation activity, and reports open remediation work by team.
 
-**משתמשים:** אנליסט מתעד אירועים ופעולות חקירה; מנהל צוות בוחן תיקים דחופים ועומס משימות; צוותי IT מטפלים במשימות מנע. בגרסה המקומית המשתמשים מיוצגים בשמות ובתפקידים, ללא מערכת הרשאות.
+This repository was developed as a four-person academic team project focused on advanced Python and object-oriented design.
 
-**התהליך המרכזי:** תיקי חקירה נטענים מנתוני דוגמה, מסווגים לפי חומרה וסטטוס ומועברים לטיפול לפי סדר הגעה או עדיפות. לחקירה מצורפים אירועי אבטחה ופעולות. שינוי הסטטוס מתאר התקדמות; במקרה של כשל במהלך חקירה מוחזר המצב הקודם. התוצאה היא מידע מסודר על התיקים ופעולות הטיפול.
+## Highlights
 
-**זרימת מידע:** הקלט הוא תיקי חקירה ומשימות סינתטיים מקובצי JSONL. האנליסט מוסיף פעולות ומשנה מצב; משימות מסומנות כהושלמו. הפלט כולל סדר טיפול, ספירת תיקים לפי חומרה ודוח משימות פתוחות לפי צוות. בשלב זה העדכונים נשמרים בזיכרון בלבד.
+- Models incidents, investigation actions, security events, remediation plans, and tasks.
+- Prioritizes cases using both FIFO and severity-based priority queues.
+- Validates JSONL records and safely skips malformed or duplicate data.
+- Uses inheritance and polymorphism to calculate event risk.
+- Provides lazy generators and independent custom iterators.
+- Restores incident state when an investigation context exits with an error.
+- Produces severity summaries and open-task workload reports.
+- Includes an automated test suite covering the main business rules and edge cases.
 
-**ערך עסקי:** צמצום טעויות במעקב, תמיכה בתעדוף ועזרה למנהל בזיהוי עומס.
+## Example workflow
 
-**ישויות וקשרים:** תיק חקירה מכיל אירועי רשת או תחנת קצה ופעולות חקירה. תוכנית טיפול מקושרת לתיק ומכילה משימות המשויכות לצוותים. שם האנליסט מתועד בפעולת החקירה.
-
-**שני תרחישים:** (1) אנליסט מטפל בתיק דחוף, מתעד פעולה ומשנה את מצבו. (2) מנהל מזהה עומס בדוח משימות המנע, צוות משלים משימה והדוח משקף את הירידה בעומס.
-
-**הרחבה עתידית:** קליטת אירועים משירות SIEM חיצוני ושמירה מתמשכת של העדכונים.
-
-## הרחבה לקבוצה של ארבעה
-
-שתי הישויות הנוספות הן `RemediationPlan` ו־`Task`. הקובץ `data/remediation_tasks.jsonl` מקשר כל משימה לתיק באמצעות `incident_id`. הטעינה בודקת שהתיק קיים ומאגדת משימות לתוכנית טיפול. שלוש פעולות עסקיות הן הוספת משימה לתוכנית, איתור משימות פתוחות והשלמת משימה; בנוסף מופק דוח עומס לפי צוות.
-
-התהליך מתחיל בטעינת משימות תקינות לתוכנית הקשורה לתיק. כל משימה מתחילה ב־Pending ועוברת ל־Done באמצעות `mark_completed()`. ב־`main.py` מוצגים התוכניות והקשרים, דוח לפני טיפול, השלמת משימה ודוח מעודכן. התוצאה היא ירידה במספר המשימות הפתוחות של הצוות. רשומת T-106 מפנה בכוונה לתיק INC-999 שאינו קיים; היא מדגימה אזהרה ודילוג. הדוח מציג משימות פתוחות לפי צוות, לא איחורים: בגרסה הזאת אין תאריכי יעד.
-
-<h2 dir="rtl">12. החלטות תכנון: מודל מונחה עצמים (OOP)</h2>
-<p dir="rtl">
-<strong>הורשה ופולימורפיזם:</strong> יצרנו מחלקת בסיס אבסטרקטית <code>SecurityEvent</code>, ממנה יורשות המחלקות <code>NetworkEvent</code> ו-<code>EndpointEvent</code>. הפולימורפיזם בא לידי ביטוי במתודה <code>calculate_total_risk</code> בתיק החקירה – היא עוברת על רשימת האירועים וקוראת ל-<code>get_risk_level()</code> של כל אירוע, מבלי להזדקק למשפטי <code>if/elif</code> לבדיקת סוג האובייקט.
-<br>
-<strong>הרכבה (Composition):</strong> מחלקת <code>Incident</code> מכילה בתוכה אוספים של פעולות חקירה (<code>InvestigationAction</code>) ושל אירועי אבטחה. האוספים מנוהלים דרך מתודות ייעודיות כמו <code>add_action</code>.
-</p>
-
-<h2 dir="rtl">13. טבלת מבני נתונים</h2>
-<table dir="rtl">
-  <tr>
-    <th>צורך</th>
-    <th>מבנה שנבחר</th>
-    <th>מדוע הוא מתאים</th>
-  </tr>
-  <tr>
-    <td>אחסון אוסף התיקים והפעולות</td>
-    <td><code>List</code></td>
-    <td>מאפשר סדר שמירה מוגדר, הוספה קלה בסוף הרשימה וגישה לפי אינדקס.</td>
-  </tr>
-  <tr>
-    <td>ניהול תור טיפול לפי זמן הגעה</td>
-    <td><code>deque</code> (FIFO)</td>
-    <td>שליפה מראש התור (<code>popleft</code>) מתבצעת בסיבוכיות O(1), בניגוד לרשימה רגילה.</td>
-  </tr>
-  <tr>
-    <td>ניהול תור טיפול דחוף</td>
-    <td><code>heapq</code> (Priority Queue)</td>
-    <td>מאפשר לשלוף תמיד את התיק בעל החומרה הגבוהה ביותר ביעילות (O(log n)), תוך שימוש בשובר שוויון (ID).</td>
-  </tr>
-  <tr>
-    <td>איתור תיק לפי מזהה (ID)</td>
-    <td><code>Dict</code></td>
-    <td>מספק גישה מיידית ב-O(1) מבלי לסרוק את כל האוסף, וכן משמש לקיבוץ וספירה (כמו ספירת תיקים לפי חומרה).</td>
-  </tr>
-  <tr>
-    <td>שמירת רמות חומרה ייחודיות</td>
-    <td><code>Set</code></td>
-    <td>מבטיח חוסר כפילויות ומאפשר בדיקת שייכות (<code>in</code>) ופעולות איחוד/חיתוך בצורה יעילה ומהירה.</td>
-  </tr>
-</table>
-
-<h2 dir="rtl">14. טבלת פעולות המשנות אוסף לעומת יוצרות חדש</h2>
-<table dir="rtl">
-  <tr>
-    <th>פעולה</th>
-    <th>משנה את האוסף הקיים (In-Place)</th>
-    <th>יוצרת אוסף חדש</th>
-  </tr>
-  <tr>
-    <td><code>append()</code> / <code>popleft()</code> ב-deque</td>
-    <td>כן</td>
-    <td>לא</td>
-  </tr>
-  <tr>
-    <td><code>heappush()</code> / <code>heappop()</code> ב-heapq</td>
-    <td>כן</td>
-    <td>לא</td>
-  </tr>
-  <tr>
-    <td>List / Dict Comprehensions</td>
-    <td>לא</td>
-    <td>כן</td>
-  </tr>
-  <tr>
-    <td>פעולת <code>sorted()</code></td>
-    <td>לא</td>
-    <td>כן</td>
-  </tr>
-</table>
-
-<h2 dir="rtl">15. עיבוד הנתונים וניהול משאבים</h2>
-<p dir="rtl">
-<strong>טעינת נתונים (Lazy Reading):</strong> קריאת קובץ ה-JSONL מבוצעת שורה אחר שורה באופן הדרגתי בתוך בלוק <code>with open</code>, כאשר כל שורה מומרת לאובייקט עם טיפול שגיאות הדוק למניעת קריסה.
-<br>
-<strong>Iterables ו-Iterators:</strong> מומשו המחלקות <code>IncidentCollection</code> ו-<code>IncidentIterator</code> המאפשרות מעבר עצמאי על הנתונים כך שכל קריאה ל-<code>iter()</code> מחזירה מצביע חדש לחלוטין שרץ במקביל.
-<br>
-<strong>Generator ו-Pipeline עצל:</strong> ה-Pipeline מסנן תיקים קריטיים שנמצאים בטיפול ומחזיר רק את המזהה שלהם. העיבוד מתחיל רק כשקוראים ל-<code>next()</code>, ואינו יוצר רשימות ביניים בזיכרון.
-<br>
-<strong>Context Manager:</strong> המחלקה <code>IncidentInvestigationContext</code> מנהלת את הסטטוס של התיק. אם מתרחשת חריגה בזמן העבודה, פעולת היציאה תופסת אותה ומחזירה את הסטטוס לקדמותו כדי למנוע השחתת נתונים, ועדיין מאפשרת לחריגה להמשיך הלאה ולהיות מטופלת מחוץ לבלוק.
-</p>
-
-<h2 dir="rtl">16. הוראות הרצה</h2>
-<p dir="rtl">
-1. נדרשת סביבת Python בגרסה 3.9 ומעלה.<br>
-2. ודאו שהתיקייה <code>data/</code> מכילה את הקובץ <code>sample_data.jsonl</code>.<br>
-3. הריצו מהשורש את הפקודה: <code>python main.py</code>.<br>
-4. אין צורך בהתקנת ספריות חיצוניות (requirements.txt אינו נדרש).
-</p>
-
-## מפת קבצים ואחריויות
-
-<ul dir="rtl">
-<li><code>main.py</code>: סקריפט הרצה מרכזי המדגים את כלל תרחישי המערכת.</li>
-<li><code>README.md</code> ו-<code>AI_USAGE.md</code>: תיעוד, אפיון המערכת והסברים על יצירת הנתונים.</li>
-<li><code>pyproject.toml</code> ו-<code>.gitignore</code>: הגדרות פרויקט וסביבת עבודה.</li>
-<li><code>data/sample_data.jsonl</code>: קובץ הנתונים הראשי למודל תיקי החקירה.</li>
-<li><code>data/remediation_tasks.jsonl</code>: קובץ נתונים משני להרחבת תוכניות הטיפול.</li>
-<li><code>soc_case_manager/__init__.py</code>: הגדרת התיקייה כחבילת קוד (Package).</li>
-<li><code>soc_case_manager/models.py</code>: מחלקות עסקיות (OOP, פולימורפיזם, תוכניות טיפול).</li>
-<li><code>soc_case_manager/repository.py</code>: טעינה הדרגתית של קבצים ובדיקות תקינות (Validation).</li>
-<li><code>soc_case_manager/processing.py</code>: ניהול אוספים, תור עדיפויות, מילונים ופעולות סט.</li>
-<li><code>soc_case_manager/iterators.py</code>: מחלקות Iterators מותאמים, גנרטורים וצינורות עיבוד עצלים.</li>
-<li><code>soc_case_manager/context_managers.py</code>: ניהול בטוח של משאבים באמצעות <code>with</code>.</li>
-<li><code>soc_case_manager/reports.py</code>: הפקת הדוח העסקי וניהול משימות מנע.</li>
-<li><code>tests/test_project.py</code>: בדיקות תפקוד, קלט שגוי והרצת ההדגמה.</li>
-</ul>
-
-החיפוש לפי מזהה מרוכז ב־`IncidentProcessor.get_incident` בתוך processing.py, כדי ששני התהליכים העסקיים ישתמשו באותו אינדקס. אין צורך בכפל אינדקס בתוך repository.py.
-
-## הנתונים והבדיקות
-
-לפי תיעוד יצירת הנתונים ב־AI_USAGE.md, קובץ התיקים נוצר באמצעות Gemini. כל שורה היא אובייקט JSON עם `id`, `title`, `severity`, `status`. המזהה והכותרת הם מחרוזות לא ריקות; חומרה היא Low/Medium/High/Critical וסטטוס הוא Open/In Progress/Closed. סטטוס חסר מקבל Open. השדות האחרים חובה. רשומת משימה כוללת `task_id`, `incident_id`, `description`, `assigned_team`, כולם טקסט לא ריק.
-
-שורה נקראת בתוך `with open(..., encoding="utf-8")`, מומרת למילון ב־json.loads ואז לאובייקט בבנאי from_dict. JSON פגום, ערך שאינו אובייקט, שדות חובה חסרים וערכים לא חוקיים גורמים לאזהרה ולדילוג. הטעינה שומרת את הרשומה התקינה הראשונה לכל מזהה ומדלגת על כפילויות. אותו כלל חל על משימות, גם בטעינה חוזרת. קשר לתיק שאינו קיים מסונן. בבניית אינדקס מרשימה שסופקה ישירות ל־processing, המדיניות הנפרדת היא שהאובייקט האחרון לאותו מזהה מחליף את הקודם; הנתונים מהטוען כבר ייחודיים.
-
-הקריאה מהקובץ היא שורה־שורה, אבל תוצאת load_incidents היא רשימה מלאה בזיכרון; זו אינה הבטחה שכל המערכת צורכת זיכרון קבוע.
-
-## החלטות נוספות על אוספים
-
-| צורך | מבנה | הסבר |
-|---|---|---|
-| רשומת סיכום של מזהה וחומרה | tuple | שני שדות קבועים שאינם משתנים במהלך ההצגה |
-| סדר טיפול רגיל | deque | טיפול בתיקים לפי הגעה מונע דילוג על תיק ותיק; main מוסיף ושולף שלושה תיקים ובודק תור ריק |
-| סדר טיפול דחוף | heapq | חומרה גבוהה קודמת; __lt__ מגדיר אובייקט חמור כקטן יותר עבור min-heap, ומזהה שובר שוויון. הרשימה הפנימית אינה ממוינת במלואה |
-
-פעולות add/discard משנות set קיים; איחוד, set comprehension ו־sorted יוצרים אוספים חדשים. בפלט קבוצות ממוינות לצורכי תצוגה בלבד, ואין הסתמכות על סדר פנימי של set. `*rest` אוסף את יתר התיקים לאחר הפרדת הראשון.
-
-## Generator ו־Pipeline — מה בדיוק מודגם
-
-`generate_open_incidents` משתמש ב־yield. עצם יצירת הגנרטור אינה מריצה את הגוף. main צורך תוצאה ב־next ואז ממשיך באותו אובייקט עם for; מעבר חוזר לאחר מיצוי מחזיר אפס תוצאות. כדי להתחיל שוב יש ליצור גנרטור חדש.
-
-ב־pipeline יש סינון לפי Critical, סינון לפי In Progress והמרה למזהה. next מתחיל או מחדש את העבודה בכל השלבים. main מבקש שתי תוצאות בלבד — בקובץ המצורף INC-002 ו־INC-011 — ולכן רשומות INC-012 עד INC-015 אינן מעובדות ב־pipeline לאחר העצירה. הן כבר נטענו לרשימה על ידי הטוען. list comprehension היה מעבד את כל האוסף ובונה רשימת תוצאות מיד; Generator Expression צורך נתונים לפי בקשה, ללא רשימות ביניים. האיטרטור מתקדם ואינו חוזר לאחור, ולכן מעבר נוסף מהתחלה דורש יצירת pipeline חדש.
-
-## הרצה ובדיקות
-
-יש להריץ משורש המאגר, כאשר שני קובצי data קיימים:
-
-```sh
-python main.py
-python -m unittest discover -s tests -v
-git log --oneline --graph --all
+```mermaid
+flowchart LR
+    A[JSONL incident records] --> B[Validation and loading]
+    B --> C[Incident objects]
+    C --> D[FIFO queue]
+    C --> E[Priority queue]
+    C --> F[Investigation context]
+    G[Remediation task records] --> H[Remediation plans]
+    C --> H
+    H --> I[Open tasks by team]
+    D --> J[Console demonstration]
+    E --> J
+    F --> J
+    I --> J
 ```
 
-נדרשת Python 3.9 ומעלה. ההרצה והבדיקות אומתו ב־Python 3.12.14. אין תלות חיצונית להתקנה. הודעת RuntimeError בהדגמה ואזהרת המשימה המקושרת לתיק חסר הן תרחישים מכוונים; התוכנית ממשיכה ומסתיימת כרגיל.
+## Core design
 
-לפני ההגשה יש לצרף את פלט Git לקישור המאגר ולוודא שהצעת חלק א הוגשה בנפרד ואושרה. בדיקות אוטומטיות אינן מחליפות הבנה והסבר אישי של הקוד.
+| Area | Implementation |
+| --- | --- |
+| Domain model | `Incident`, `SecurityEvent`, `InvestigationAction`, `RemediationPlan`, and `Task` |
+| OOP | Abstract base class, inheritance, composition, properties, and alternative constructors |
+| Prioritization | `deque` for FIFO and `heapq` for severity-based processing |
+| Fast lookup | Dictionary index by incident ID |
+| Data processing | List, dictionary, and set comprehensions plus multi-field sorting |
+| Lazy evaluation | Generators and a three-stage lazy pipeline |
+| Safe state changes | Custom context manager with rollback on exceptions |
+| Persistence input | Line-by-line JSONL loading with validation and duplicate detection |
+
+## Project structure
+
+```text
+Soar-project/
+├── data/
+│   ├── sample_data.jsonl          # Synthetic incident records
+│   └── remediation_tasks.jsonl    # Synthetic remediation tasks
+├── docs/
+│   └── assignment-notes-he.md     # Original Hebrew academic documentation
+├── soc_case_manager/
+│   ├── context_managers.py        # Investigation lifecycle and rollback
+│   ├── iterators.py               # Custom iterator and lazy generators
+│   ├── models.py                  # Domain classes and validation
+│   ├── processing.py              # Queues, indexing, filtering, and sorting
+│   ├── reports.py                 # Remediation plans and workload reports
+│   └── repository.py              # JSONL incident loader
+├── tests/
+│   └── test_project.py            # Automated unit and integration tests
+├── AI_USAGE.md                    # AI-use documentation for the course
+├── main.py                        # End-to-end console demonstration
+└── pyproject.toml                 # Project metadata
+```
+
+## Getting started
+
+### Requirements
+
+- Python 3.9 or newer
+- No external runtime dependencies
+
+### Run the demonstration
+
+```bash
+git clone https://github.com/asaf0505-svg/Soar-project.git
+cd Soar-project
+python main.py
+```
+
+On Windows, use `py main.py` if `python` is not available as a command.
+
+The demonstration loads the sample data and prints the complete flow: validation, prioritization, iteration, risk calculation, safe investigation state changes, task completion, and workload reporting.
+
+## Run the tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The test suite covers:
+
+- Invalid records and duplicate IDs
+- Incident and task validation
+- FIFO and priority queue ordering
+- Inheritance-based risk calculation
+- Independent iterators and lazy generators
+- Context-manager success and rollback behavior
+- Remediation loading and workload reports
+- End-to-end execution of `main.py`
+
+The same test command runs automatically on GitHub Actions for every push and pull request.
+
+## Data and security notes
+
+- All records in `data/` are synthetic examples for demonstration purposes.
+- The application runs locally and does not connect to a real SIEM or production environment.
+- Invalid or incomplete JSONL records are reported and skipped instead of stopping the process.
+- State changes are kept in memory; persistent storage is a possible future extension.
+
+## Technology
+
+- Python 3.9+
+- Python standard library
+- `unittest`
+- JSON Lines (JSONL)
+- GitHub Actions
+
+## Future improvements
+
+- Connect to a SIEM ingestion API.
+- Persist incident and remediation updates in a database.
+- Add authentication and analyst roles.
+- Provide a web dashboard for case triage and reporting.
+
+## Documentation
+
+- [Original course documentation (Hebrew)](docs/assignment-notes-he.md)
+- [AI usage documentation](AI_USAGE.md)
+
