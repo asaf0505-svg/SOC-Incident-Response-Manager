@@ -1,7 +1,7 @@
 # SOC Case Manager
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://github.com/asaf0505-svg/Soar-project/actions/workflows/tests.yml/badge.svg)](https://github.com/asaf0505-svg/Soar-project/actions/workflows/tests.yml)
+[![Tests](https://github.com/asaf0505-svg/SOC-Incident-Response-Manager/actions/workflows/tests.yml/badge.svg)](https://github.com/asaf0505-svg/SOC-Incident-Response-Manager/actions/workflows/tests.yml)
 [![Built with the standard library](https://img.shields.io/badge/dependencies-standard%20library-2ea44f)](#technology)
 
 A local Python application for managing, prioritizing, and reporting on Security Operations Center (SOC) incidents. The project models a practical incident-response workflow: it loads security cases from JSONL records, validates them, prioritizes urgent incidents, tracks investigation activity, and reports open remediation work by team.
@@ -53,7 +53,7 @@ flowchart LR
 ## Project structure
 
 ```text
-Soar-project/
+SOC-Incident-Response-Manager/
 ├── data/
 │   ├── sample_data.jsonl          # Synthetic incident records
 │   └── remediation_tasks.jsonl    # Synthetic remediation tasks
@@ -83,8 +83,8 @@ Soar-project/
 ### Run the demonstration
 
 ```bash
-git clone https://github.com/asaf0505-svg/Soar-project.git
-cd Soar-project
+git clone https://github.com/asaf0505-svg/SOC-Incident-Response-Manager.git
+cd SOC-Incident-Response-Manager
 python main.py
 ```
 
